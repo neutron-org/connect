@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
