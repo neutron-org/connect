@@ -39,10 +39,8 @@ service Query {
   // way to get the underlying currency pair from it.
   rpc GetCurrencyPairMappingList(GetCurrencyPairMappingListRequest)
       returns (GetCurrencyPairMappingListResponse) {
-    option (google.api.http) = {
-      get : "/connect/oracle/v2/get_currency_pair_mapping_list"
-      additional_bindings : []
-    };
+    option (google.api.http).get =
+        "/connect/oracle/v2/get_currency_pair_mapping_list";
   }
 }
 
