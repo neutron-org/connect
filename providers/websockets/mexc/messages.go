@@ -3,7 +3,6 @@ package mexc
 import (
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"math"
 
 	slinkymath "github.com/skip-mev/slinky/pkg/math"
@@ -93,7 +92,6 @@ func (h *WebSocketHandler) NewSubscribeRequestMessage(instruments []string) ([]h
 	}
 
 	numBatches := int(math.Ceil(float64(numInstruments) / float64(h.ws.MaxSubscriptionsPerBatch)))
-	h.logger.Error("numBatches", zap.Int("len", numBatches))
 	msgs := make([]handlers.WebsocketEncodedMessage, numBatches)
 	for i := 0; i < numBatches; i++ {
 		// Get the instruments for this batch.
@@ -104,7 +102,6 @@ func (h *WebSocketHandler) NewSubscribeRequestMessage(instruments []string) ([]h
 			Method: string(SubscriptionMethod),
 			Params: instruments[start:end],
 		})
-		h.logger.Error("mexc batch", zap.String("batch", string(bz)))
 		if err != nil {
 			return nil, err
 		}

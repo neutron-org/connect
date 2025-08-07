@@ -75,7 +75,6 @@ func (h *WebSocketHandler) HandleMessage(
 		msg       SubscribeMessageResponse
 		streamMsg StreamMessageResponse
 	)
-	h.logger.Error("binancex: Incoming message: ", zap.String("msg", string(message)))
 
 	// Unmarshal the message. If the message fails to be unmarshaled or is empty, this means
 	// that we likely received a price update message.
