@@ -36,8 +36,8 @@ type Config struct {
 // NewDefaultConfig creates a default configuration for the logger.
 func NewDefaultConfig() Config {
 	return Config{
-		StdOutLogLevel:  "debug",
-		FileOutLogLevel: "debug",
+		StdOutLogLevel:  "info",
+		FileOutLogLevel: "info",
 		DisableRotating: false,
 		WriteTo:         "sidecar.log",
 		MaxSize:         1, // 100MB
