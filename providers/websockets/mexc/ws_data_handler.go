@@ -68,12 +68,14 @@ func (h *WebSocketHandler) HandleMessage(
 	if err := json.Unmarshal(message, &msg); err != nil {
 		return resp, nil, fmt.Errorf("failed to unmarshal message %w", err)
 	}
+	h.logger.Error("mexc: basemsg: {:?}", zap.String("a", msg.Message))
 
 	// If the base message is empty, we assume it is a price message.
 	if msg.IsEmpty() {
 		if err := json.Unmarshal(message, &tickerMsg); err != nil {
 			return resp, nil, fmt.Errorf("failed to unmarshal ticker message %w", err)
 		}
+		h.logger.Error("mexc: tickerMsg: {:?}", zap.String("a", tickerMsg.Data.Symbol))
 
 		// Parse the ticker message.
 		resp, err := h.parseTickerResponseMessage(tickerMsg)
