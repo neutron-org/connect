@@ -104,6 +104,7 @@ func (h *WebSocketHandler) CreateMessages(
 	if len(tickers) > MaxSubscriptionsPerConnection {
 		return nil, fmt.Errorf("cannot subscribe to more than %d tickers per connection", MaxSubscriptionsPerConnection)
 	}
+	h.logger.Error("mexc: tickers len: ", zap.Int("tickerslen to subscribe", len(tickers)))
 
 	instruments := make([]string, 0)
 	for _, ticker := range tickers {
