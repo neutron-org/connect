@@ -1,7 +1,6 @@
 package mexc
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -66,13 +65,10 @@ func (h *WebSocketHandler) HandleMessage(
 		tickerMsg TickerResponseMessage
 	)
 
-	fmt.Printf("outer message: %s\n", string(message))
-	encoded := base64.StdEncoding.EncodeToString(message)
-	fmt.Printf("\n\nouter mexc encoded: %s\n\n", encoded)
-
+	// if it's not a base message, it must be a protobuf encoded message
 	if err := json.Unmarshal(message, &msg); err != nil {
-		// JSON base message failed; try protobuf miniTicker decoding.
-		if symbol, price, ok := decodeMiniTickerProtobuf(message); ok {
+		symbol, price, err := decodeMiniTickerProtobuf(message)
+		if err == nil {
 			tickerMsg = TickerResponseMessage{
 				Channel: string(MiniTickerChannel),
 				Data:    TickerData{Symbol: symbol, Price: price},
@@ -80,7 +76,7 @@ func (h *WebSocketHandler) HandleMessage(
 			resp, err := h.parseTickerResponseMessage(tickerMsg)
 			return resp, nil, err
 		} else {
-			return resp, nil, fmt.Errorf("failed to unmarshal message %w", err)
+			return resp, nil, fmt.Errorf("failed to decode miniticker protobuf message %w", err)
 		}
 	}
 

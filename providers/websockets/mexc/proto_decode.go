@@ -1,7 +1,6 @@
 package mexc
 
 import (
-	"encoding/base64"
 	"fmt"
 
 	goproto "google.golang.org/protobuf/proto"
@@ -16,25 +15,28 @@ import (
 //  2: price  (string)
 
 // decodeMiniTickerProtobuf extracts symbol and price from a protobuf-encoded
-// PublicMiniTickerV3Api message. It returns ok=false if the payload does not
+// PublicMiniTickerV3Api message. It returns error if the payload does not
 // appear to be a valid protobuf with the expected fields.
-func decodeMiniTickerProtobuf(message []byte) (symbol string, price string, ok bool) {
-	// MEXC may prepend an ASCII topic prefix before the protobuf bytes.
-	// Scan forward and attempt to unmarshal from each offset.
-	encoded := base64.StdEncoding.EncodeToString(message)
-	fmt.Printf("\n\nmexc encoded: %s\n", encoded)
+func decodeMiniTickerProtobuf(message []byte) (string, string, error) {
+	var wrapper mexcpb.PushDataV3ApiWrapper
+	if err := goproto.Unmarshal(message, &wrapper); err != nil {
+		return "", "", fmt.Errorf("failed to unmarshal PushDataV3ApiWrapper from proto: %w", err)
+	}
+	// Check that field of the oneof is set to "PublicMiniTickerV3Api"
+	var minitickerMsg *mexcpb.PublicMiniTickerV3Api
+	switch body := wrapper.Body.(type) {
+	case *mexcpb.PushDataV3ApiWrapper_PublicMiniTicker:
+		minitickerMsg = body.PublicMiniTicker
+	default:
+		return "", "", fmt.Errorf("no PublicMiniTicker in this message (found %T)", body)
 
-	//for off := 0; off < len(message); off++ {
-	fmt.Printf("message: %s\n", string(message))
-	var msg mexcpb.PublicMiniTickerV3Api
-	if err := goproto.Unmarshal(message[0:], &msg); err != nil {
-		return "", "", false
 	}
-	s := msg.GetSymbol()
-	p := msg.GetPrice()
-	if s != "" && p != "" {
-		return s, p, true
+	symbol := minitickerMsg.GetSymbol()
+	price := minitickerMsg.GetPrice()
+
+	if symbol != "" && price != "" {
+		return symbol, price, nil
+	} else {
+		return "", "", fmt.Errorf("empty symbol=%s or price=%s", symbol, price)
 	}
-	//}
-	return "", "", false
 }

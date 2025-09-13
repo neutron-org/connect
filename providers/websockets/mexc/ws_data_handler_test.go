@@ -1,6 +1,7 @@
 package mexc_test
 
 import (
+	"encoding/base64"
 	"fmt"
 	"math/big"
 	"testing"
@@ -36,29 +37,6 @@ func TestHandleMessage(t *testing.T) {
 		updateMessage func() []handlers.WebsocketEncodedMessage
 		expErr        bool
 	}{
-		{
-			name: "protobuf miniTicker message",
-			msg: func() []byte {
-				// Include ASCII topic prefix followed by protobuf payload.
-				prefix := []byte("spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8")
-				// protobuf: field 1 (symbol) = "BTCUSDT", field 2 (price) = "10000.00"
-				s := []byte{0x0A, 0x07}
-				s = append(s, []byte("BTCUSDT")...)
-				p := []byte{0x12, 0x08}
-				p = append(p, []byte("10000.00")...)
-				pb := append(s, p...)
-				return append(prefix, pb...)
-			},
-			resp: types.PriceResponse{
-				Resolved: types.ResolvedPrices{
-					btcusdt: {
-						Value: big.NewFloat(10000.00),
-					},
-				},
-			},
-			updateMessage: func() []handlers.WebsocketEncodedMessage { return nil },
-			expErr:        false,
-		},
 		{
 			name: "pong message",
 			msg: func() []byte {
@@ -158,6 +136,58 @@ func TestHandleMessage(t *testing.T) {
 			},
 			expErr: true,
 		},
+		{
+			name: "valid price update 1",
+			msg: func() []byte {
+				msg := "Ci5zcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYkBCVENVU0RUQFVUQys4GgdCVENVU0RUMLulvZqUM6oTfAoHQlRDVVNEVBIJMTE1ODg3LjUxGgYwLjAwNjciBjAuMDA2NyoJMTE2NjU1LjM5MgkxMTQ4NzIuODM6Czg1Njc3MjA1Ny41Qg03MzkwLjYxNzM4MDM4SgYwLjAwNjdSBjAuMDA2N1oJMTE2NjU1LjM5YgkxMTQ4NzIuODM="
+				decoded, err := base64.StdEncoding.DecodeString(msg)
+
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("decoded:", string(decoded))
+				return decoded
+			},
+			resp: func() types.PriceResponse {
+				return types.PriceResponse{
+					Resolved: types.ResolvedPrices{
+						btcusdt: {
+							Value: big.NewFloat(115887.50),
+						},
+					},
+				}
+			}(),
+			updateMessage: func() []handlers.WebsocketEncodedMessage {
+				return nil
+			},
+			expErr: false,
+		},
+		{
+			name: "valid price update 2",
+			msg: func() []byte {
+				msg := "Ci5zcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYkBFVEhVU0RUQFVUQys4GgdFVEhVU0RUMLelvZqUM6oTbwoHRVRIVVNEVBIHNDcxNC4wNxoFMC4wMzgiBTAuMDM4Kgc0NzY2LjU5Mgc0NTA4LjY0Og0xMzUzNzcwNjA2LjQ3QgwyOTAyNDcuNDA4MzdKBTAuMDM4UgUwLjAzOFoHNDc2Ni41OWIHNDUwOC42NA=="
+				decoded, err := base64.StdEncoding.DecodeString(msg)
+
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("decoded:", string(decoded))
+				return decoded
+			},
+			resp: func() types.PriceResponse {
+				return types.PriceResponse{
+					Resolved: types.ResolvedPrices{
+						ethusdt: {
+							Value: big.NewFloat(4714.06),
+						},
+					},
+				}
+			}(),
+			updateMessage: func() []handlers.WebsocketEncodedMessage {
+				return nil
+			},
+			expErr: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -188,7 +218,10 @@ func TestHandleMessage(t *testing.T) {
 
 			for cp, result := range tc.resp.Resolved {
 				require.Contains(t, resp.Resolved, cp)
-				require.Equal(t, result.Value.SetPrec(18), resp.Resolved[cp].Value.SetPrec(18))
+				require.Equal(t,
+					result.Value.SetPrec(18).SetMode(big.ToNearestEven),
+					resp.Resolved[cp].Value.SetPrec(18).SetMode(big.ToNearestEven),
+				)
 			}
 
 			for cp := range tc.resp.UnResolved {
