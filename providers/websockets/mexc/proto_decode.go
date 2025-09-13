@@ -21,7 +21,7 @@ func decodeMiniTickerProtobuf(message []byte) (symbol string, price string, ok b
 	// MEXC may prepend an ASCII topic prefix before the protobuf bytes.
 	// Scan forward and attempt to unmarshal from each offset.
 	for off := 0; off < len(message); off++ {
-		fmt.Printf("offset: %+v\n", off)
+		fmt.Printf("message: %s\n", string(message))
 		var msg mexcpb.PublicMiniTickerV3Api
 		if err := goproto.Unmarshal(message[off:], &msg); err != nil {
 			continue
