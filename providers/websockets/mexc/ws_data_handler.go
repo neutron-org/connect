@@ -66,18 +66,39 @@ func (h *WebSocketHandler) HandleMessage(
 	)
 
 	if err := json.Unmarshal(message, &msg); err != nil {
+		// JSON base message failed; try protobuf miniTicker decoding.
+		if symbol, price, ok := decodeMiniTickerProtobuf(message); ok {
+			tickerMsg = TickerResponseMessage{
+				Channel: string(MiniTickerChannel),
+				Data:    TickerData{Symbol: symbol, Price: price},
+			}
+			resp, err := h.parseTickerResponseMessage(tickerMsg)
+			return resp, nil, err
+		}
+
 		return resp, nil, fmt.Errorf("failed to unmarshal message %w", err)
 	}
 
 	// If the base message is empty, we assume it is a price message.
 	if msg.IsEmpty() {
-		if err := json.Unmarshal(message, &tickerMsg); err != nil {
-			return resp, nil, fmt.Errorf("failed to unmarshal ticker message %w", err)
+		// Try legacy JSON ticker first.
+		if err := json.Unmarshal(message, &tickerMsg); err == nil {
+			// Parse the ticker message.
+			resp, err := h.parseTickerResponseMessage(tickerMsg)
+			return resp, nil, err
 		}
 
-		// Parse the ticker message.
-		resp, err := h.parseTickerResponseMessage(tickerMsg)
-		return resp, nil, err
+		// Fallback: protobuf miniTicker payload
+		if symbol, price, ok := decodeMiniTickerProtobuf(message); ok {
+			tickerMsg = TickerResponseMessage{
+				Channel: string(MiniTickerChannel),
+				Data:    TickerData{Symbol: symbol, Price: price},
+			}
+			resp, err := h.parseTickerResponseMessage(tickerMsg)
+			return resp, nil, err
+		}
+
+		return resp, nil, fmt.Errorf("unknown ticker message format")
 	}
 
 	// Otherwise, we assume it is a subscription or pong message.

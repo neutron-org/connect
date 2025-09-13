@@ -37,6 +37,29 @@ func TestHandleMessage(t *testing.T) {
 		expErr        bool
 	}{
 		{
+			name: "protobuf miniTicker message",
+			msg: func() []byte {
+				// Include ASCII topic prefix followed by protobuf payload.
+				prefix := []byte("spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8")
+				// protobuf: field 1 (symbol) = "BTCUSDT", field 2 (price) = "10000.00"
+				s := []byte{0x0A, 0x07}
+				s = append(s, []byte("BTCUSDT")...)
+				p := []byte{0x12, 0x08}
+				p = append(p, []byte("10000.00")...)
+				pb := append(s, p...)
+				return append(prefix, pb...)
+			},
+			resp: types.PriceResponse{
+				Resolved: types.ResolvedPrices{
+					btcusdt: {
+						Value: big.NewFloat(10000.00),
+					},
+				},
+			},
+			updateMessage: func() []handlers.WebsocketEncodedMessage { return nil },
+			expErr:        false,
+		},
+		{
 			name: "pong message",
 			msg: func() []byte {
 				return []byte(`{"id":0,"code":0,"msg":"PONG"}`)
@@ -50,7 +73,7 @@ func TestHandleMessage(t *testing.T) {
 		{
 			name: "subscription message",
 			msg: func() []byte {
-				return []byte(`{"id":0,"code":0,"msg":"spot@public.miniTicker.v3.api@BTCUSDT@UTC+8"}`)
+				return []byte(`{"id":0,"code":0,"msg":"spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8"}`)
 			},
 			resp: types.PriceResponse{},
 			updateMessage: func() []handlers.WebsocketEncodedMessage {
@@ -72,7 +95,7 @@ func TestHandleMessage(t *testing.T) {
 		{
 			name: "price update message",
 			msg: func() []byte {
-				msg := `{"c":"spot@public.miniTicker.v3.api@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"10000.00"}}`
+				msg := `{"c":"spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"10000.00"}}`
 				return []byte(msg)
 			},
 			resp: types.PriceResponse{
@@ -90,7 +113,7 @@ func TestHandleMessage(t *testing.T) {
 		{
 			name: "unsupported market price update",
 			msg: func() []byte {
-				msg := `{"c":"spot@public.miniTicker.v3.api@MOGUSDT@UTC+8","d":{"s":"MOGUSDT","p":"10000.00"}}`
+				msg := `{"c":"spot@public.miniTicker.v3.api.pb@MOGUSDT@UTC+8","d":{"s":"MOGUSDT","p":"10000.00"}}`
 				return []byte(msg)
 			},
 			resp: types.PriceResponse{},
@@ -102,7 +125,7 @@ func TestHandleMessage(t *testing.T) {
 		{
 			name: "price update from incorrect channel",
 			msg: func() []byte {
-				msg := `{"c":"futures@public.miniTicker.v3.api@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"10000.00"}}`
+				msg := `{"c":"futures@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"10000.00"}}`
 				return []byte(msg)
 			},
 			resp: types.PriceResponse{
@@ -120,7 +143,7 @@ func TestHandleMessage(t *testing.T) {
 		{
 			name: "price update with invalid price",
 			msg: func() []byte {
-				msg := `{"c":"spot@public.miniTicker.v3.api@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"$10,000.00"}}`
+				msg := `{"c":"spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"$10,000.00"}}`
 				return []byte(msg)
 			},
 			resp: types.PriceResponse{
