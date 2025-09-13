@@ -22,7 +22,7 @@ func decodeMiniTickerProtobuf(message []byte) (symbol string, price string, ok b
 	// MEXC may prepend an ASCII topic prefix before the protobuf bytes.
 	// Scan forward and attempt to unmarshal from each offset.
 	encoded := base64.StdEncoding.EncodeToString(message)
-	fmt.Println("\n\nmexc encoded:\n", encoded)
+	fmt.Printf("\n\nmexc encoded: %s\n", encoded)
 
 	//for off := 0; off < len(message); off++ {
 	fmt.Printf("message: %s\n", string(message))
