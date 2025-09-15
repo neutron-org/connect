@@ -24,6 +24,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// taken from https://github.com/mexcdevelop/websocket-proto/blob/4285a07f9d51a23833c198c482d7a2956ce38f91/PushDataV3ApiWrapper.proto#L24
 type PushDataV3ApiWrapper struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// *

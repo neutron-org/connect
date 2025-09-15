@@ -26,14 +26,12 @@ option optimize_for = SPEED;
 option java_multiple_files = true;
 option java_outer_classname = "PushDataV3ApiWrapperProto";
 
+// taken from https://github.com/mexcdevelop/websocket-proto/blob/4285a07f9d51a23833c198c482d7a2956ce38f91/PushDataV3ApiWrapper.proto#L24
 message PushDataV3ApiWrapper {
-
-
   /**
    * 频道
    */
   string channel = 1;
-
   /**
    * 数据，NOTE：因为不能重复，所以类型和变量名尽量使用全名
    */
@@ -54,25 +52,20 @@ message PushDataV3ApiWrapper {
 //    PublicAggreDealsV3Api publicAggreDeals = 314;
 //    PublicAggreBookTickerV3Api publicAggreBookTicker = 315;
   }
-
   /**
    * 交易对
    */
   optional string symbol = 3;
-
   /**
    * 交易对ID
    */
   optional string symbolId = 4;
-
   /**
    * 消息生成时间
    */
   optional int64 createTime = 5;
-
   /**
    * 消息推送时间
    */
   optional int64 sendTime = 6;
-
 }
