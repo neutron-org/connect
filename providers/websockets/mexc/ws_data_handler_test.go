@@ -145,7 +145,6 @@ func TestHandleMessage(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				fmt.Println("decoded:", string(decoded))
 				return decoded
 			},
 			resp: func() types.PriceResponse {
@@ -171,7 +170,6 @@ func TestHandleMessage(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				fmt.Println("decoded:", string(decoded))
 				return decoded
 			},
 			resp: func() types.PriceResponse {

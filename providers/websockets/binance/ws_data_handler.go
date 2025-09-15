@@ -112,6 +112,8 @@ func (h *WebSocketHandler) HandleMessage(
 			return resp, nil, fmt.Errorf("failed to unmarshal ticker message %w", err)
 		}
 
+		fmt.Printf("binance: key=%s value=%s\n", tickerResp.Data.Ticker, tickerResp.Data.LastPrice)
+
 		h.logger.Debug("received ticker message", zap.String("ticker", tickerResp.Data.Ticker))
 		resp, err := h.parsePriceUpdateMessage(tickerResp.Data.Ticker, tickerResp.Data.LastPrice)
 		return resp, nil, err

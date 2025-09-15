@@ -3,9 +3,8 @@ package mexc
 import (
 	"fmt"
 
-	goproto "google.golang.org/protobuf/proto"
-
 	mexcpb "github.com/skip-mev/slinky/providers/websockets/mexc/proto"
+	goproto "google.golang.org/protobuf/proto"
 )
 
 // Lightweight protobuf wire decoder for PublicMiniTickerV3Api
@@ -29,7 +28,6 @@ func decodeMiniTickerProtobuf(message []byte) (string, string, error) {
 		minitickerMsg = body.PublicMiniTicker
 	default:
 		return "", "", fmt.Errorf("no PublicMiniTicker in this message (found %T)", body)
-
 	}
 	symbol := minitickerMsg.GetSymbol()
 	price := minitickerMsg.GetPrice()
