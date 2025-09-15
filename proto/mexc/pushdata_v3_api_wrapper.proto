@@ -26,7 +26,6 @@ option optimize_for = SPEED;
 option java_multiple_files = true;
 option java_outer_classname = "PushDataV3ApiWrapperProto";
 
-// taken from https://github.com/mexcdevelop/websocket-proto/blob/4285a07f9d51a23833c198c482d7a2956ce38f91/PushDataV3ApiWrapper.proto#L24
 message PushDataV3ApiWrapper {
   /**
    * 频道
