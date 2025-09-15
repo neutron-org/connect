@@ -78,13 +78,6 @@ func (h *WebSocketHandler) HandleMessage(
 				Data:    TickerData{Symbol: symbol, Price: price},
 			}
 			resp, err := h.parseTickerResponseMessage(tickerMsg)
-			if err == nil {
-				for key, value := range resp.Resolved {
-					fmt.Printf("mexc: key=%s value=%s\n", key.String(), value.Value.String())
-				}
-			} else {
-				fmt.Printf("mexc: nil ==============\n")
-			}
 			return resp, nil, err
 		} else {
 			return resp, nil, fmt.Errorf("failed to decode miniticker protobuf message %w", err)
