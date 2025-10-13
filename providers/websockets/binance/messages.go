@@ -85,7 +85,7 @@ type SubscribeMessageRequest struct {
 // ref: https://developers.binance.com/docs/binance-spot-api-docs/web-socket-streams#live-subscribingunsubscribing-to-streams
 type SubscribeMessageResponse struct {
 	// Result is the result of the subscription.
-	Result interface{} `json:"result"`
+	Result any `json:"result"`
 	// ID is the unique identifier for the message.
 	ID int64 `json:"id"`
 }
@@ -217,8 +217,11 @@ func (h *WebSocketHandler) NewSubscribeRequestMessage(instruments []string) ([]h
 	}
 
 	numBatches := int(math.Ceil(float64(numInstruments) / float64(h.ws.MaxSubscriptionsPerBatch)))
+
+	fmt.Println("===== NewSubscribeRequestMessage", numBatches, instruments)
+
 	msgs := make([]handlers.WebsocketEncodedMessage, numBatches)
-	for i := 0; i < numBatches; i++ {
+	for i := range numBatches {
 		// Get the instruments for the batch.
 		start := i * h.ws.MaxSubscriptionsPerBatch
 		end := slinkymath.Min((i+1)*h.ws.MaxSubscriptionsPerBatch, numInstruments)
@@ -233,11 +236,15 @@ func (h *WebSocketHandler) NewSubscribeRequestMessage(instruments []string) ([]h
 
 		// Generate a random ID.
 		id := h.GenerateID()
-		msg, err := json.Marshal(SubscribeMessageRequest{
+		req := SubscribeMessageRequest{
 			Method: string(SubscribeMethod),
 			Params: params,
 			ID:     id,
-		})
+		}
+
+		fmt.Println("===== Request", req)
+
+		msg, err := json.Marshal(req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal subscribe message: %w", err)
 		}

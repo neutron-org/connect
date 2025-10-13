@@ -87,7 +87,8 @@ func (h *WebSocketHandler) HandleMessage(
 		if msg.Result != nil {
 			// If the result is not nil, this means that the subscription failed to be made. Return
 			// an update message with the same subscription.
-			h.logger.Debug("failed to make subscription; attempting to re-subscribe", zap.Any("instruments", msg))
+			h.logger.Debug("failed to make subscription; attempting to re-subscribe", zap.Any("instruments", instruments))
+			fmt.Println("===== Re-subscribe", instruments)
 			subscriptionMsgs, err := h.NewSubscribeRequestMessage(instruments)
 			return resp, subscriptionMsgs, err
 		}
@@ -95,6 +96,7 @@ func (h *WebSocketHandler) HandleMessage(
 		// If the result is nil, this means that the subscription was successful. Return an empty
 		// response.
 		h.logger.Debug("successfully subscribed to instruments", zap.Any("instruments", instruments))
+		fmt.Println("===== Successfully subscribed", instruments)
 		return resp, nil, nil
 	}
 

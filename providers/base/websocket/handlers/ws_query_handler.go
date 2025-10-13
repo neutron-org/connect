@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -154,6 +155,11 @@ func (h *WebSocketQueryHandlerImpl[K, V]) start(ctx context.Context) error {
 	// Start the connection.
 	h.logger.Debug("creating connection to data provider")
 	if err := h.connHandler.Dial(); err != nil {
+		if h.config.Name == "binance_ws" {
+			fmt.Println("===== Dial error", err)
+			fmt.Println("===== Config", h.config)
+		}
+
 		h.logger.Debug("failed to create connection with data provider", zap.Error(err))
 		h.metrics.AddWebSocketConnectionStatus(h.config.Name, metrics.DialErr)
 		return errors.ErrDialWithErr(err)
@@ -178,6 +184,25 @@ func (h *WebSocketQueryHandlerImpl[K, V]) start(ctx context.Context) error {
 
 		// Send the initial payload to the data provider.
 		if err := h.connHandler.Write(message); err != nil {
+			if h.config.Name == "binance_ws" {
+				type SubscribeMessageRequest struct {
+					// Method is the method type for the message.
+					Method string `json:"method"`
+					// Params is the list of streams to subscribe to.
+					Params []string `json:"params"`
+					// ID is the unique identifier for the message.
+					ID int64 `json:"id"`
+				}
+
+				var req SubscribeMessageRequest
+				if err := json.Unmarshal(message, &req); err != nil {
+					fmt.Println("===== Unmarshal failed", string(message))
+				}
+
+				fmt.Println("===== Message", req)
+				fmt.Println("===== Config", h.config)
+			}
+
 			h.logger.Debug("failed to write message to websocket connection handler", zap.Error(err))
 			h.metrics.AddWebSocketConnectionStatus(h.config.Name, metrics.WriteErr)
 			return errors.ErrWriteWithErr(err)
