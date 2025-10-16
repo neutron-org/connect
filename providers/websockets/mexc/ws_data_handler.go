@@ -14,7 +14,7 @@ import (
 
 var _ types.PriceWebSocketDataHandler = (*WebSocketHandler)(nil)
 
-// WebSocketDataHandler implements the WebSocketDataHandler interface. This is used to
+// WebSocketHandler implements the PriceWebSocketDataHandler interface. This is used to
 // handle messages received from the MEXC websocket API.
 type WebSocketHandler struct {
 	logger *zap.Logger
@@ -65,19 +65,23 @@ func (h *WebSocketHandler) HandleMessage(
 		tickerMsg TickerResponseMessage
 	)
 
-	if err := json.Unmarshal(message, &msg); err != nil {
-		return resp, nil, fmt.Errorf("failed to unmarshal message %w", err)
-	}
+	err := json.Unmarshal(message, &msg)
 
-	// If the base message is empty, we assume it is a price message.
-	if msg.IsEmpty() {
-		if err := json.Unmarshal(message, &tickerMsg); err != nil {
-			return resp, nil, fmt.Errorf("failed to unmarshal ticker message %w", err)
+	// if it's not a base message, it must be a protobuf encoded message
+	if err != nil {
+		channel, symbol, price, err := decodeMiniTickerProtobuf(message)
+		if err == nil {
+			h.logger.Debug("subscribed to ticker channel", zap.String("instruments", msg.Message))
+
+			tickerMsg = TickerResponseMessage{
+				Channel: channel,
+				Data:    TickerData{Symbol: symbol, Price: price},
+			}
+			resp, err := h.parseTickerResponseMessage(tickerMsg)
+			return resp, nil, err
+		} else {
+			return resp, nil, fmt.Errorf("failed to decode miniticker protobuf message %w", err)
 		}
-
-		// Parse the ticker message.
-		resp, err := h.parseTickerResponseMessage(tickerMsg)
-		return resp, nil, err
 	}
 
 	// Otherwise, we assume it is a subscription or pong message.

@@ -1,0 +1,22 @@
+// spot@public.miniTicker.v3.api
+// https://github.com/mexcdevelop/websocket-proto/blob/main/PublicMiniTickerV3Api.proto
+syntax = "proto3";
+
+option go_package = "providers/websockets/mexc/proto";
+
+import "proto/mexc/response.proto";
+
+option optimize_for = SPEED;
+option java_multiple_files = true;
+option java_outer_classname = "PushDataV3ApiWrapperProto";
+
+message PushDataV3ApiWrapper {
+  string channel = 1;
+  oneof body {
+    PublicMiniTickerV3Api publicMiniTicker = 309;
+  }
+  optional string symbol = 3;
+  optional string symbolId = 4;
+  optional int64 createTime = 5;
+  optional int64 sendTime = 6;
+}

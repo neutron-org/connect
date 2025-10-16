@@ -39,10 +39,10 @@ const (
 	// MiniTickerChannel is the channel that is used to subscribe to the mini ticker data for a
 	// currency pair i.e. market.
 	//
-	// ex: spot@public.miniTicker.v3.api@BTCUSDT@UTC+8
+	// ex: spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8
 	//
 	// ref: https://mexcdevelop.github.io/apidocs/spot_v3_en/#miniticker
-	MiniTickerChannel ChannelType = "spot@public.miniTicker.v3.api@"
+	MiniTickerChannel ChannelType = "spot@public.miniTicker.v3.api.pb@"
 )
 
 // BaseMessage defines the base message that is used to determine the type of message that is being
