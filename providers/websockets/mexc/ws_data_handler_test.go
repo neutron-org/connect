@@ -274,15 +274,13 @@ func TestHandleMessage(t *testing.T) {
 				}
 				return decoded
 			},
-			resp: func() types.PriceResponse {
-				return types.PriceResponse{
-					Resolved: types.ResolvedPrices{
-						btcusdt: {
-							Value: big.NewFloat(115887.50),
-						},
+			resp: types.PriceResponse{
+				Resolved: types.ResolvedPrices{
+					btcusdt: {
+						Value: big.NewFloat(115887.50),
 					},
-				}
-			}(),
+				},
+			},
 			updateMessage: func() []handlers.WebsocketEncodedMessage {
 				return nil
 			},
@@ -299,15 +297,13 @@ func TestHandleMessage(t *testing.T) {
 				}
 				return decoded
 			},
-			resp: func() types.PriceResponse {
-				return types.PriceResponse{
-					Resolved: types.ResolvedPrices{
-						ethusdt: {
-							Value: big.NewFloat(4714.06),
-						},
+			resp: types.PriceResponse{
+				Resolved: types.ResolvedPrices{
+					ethusdt: {
+						Value: big.NewFloat(4714.06),
 					},
-				}
-			}(),
+				},
+			},
 			updateMessage: func() []handlers.WebsocketEncodedMessage {
 				return nil
 			},
@@ -325,10 +321,7 @@ func TestHandleMessage(t *testing.T) {
 			require.NoError(t, err)
 
 			resp, updateMsg, err := wsHandler.HandleMessage(tc.msg())
-			//fmt.Printf("resp: %+v", resp)
 			if tc.expErr {
-				//fmt.Printf("Result error: %s\n\n", err)
-
 				require.Error(t, err)
 
 				require.Equal(t, len(tc.resp.UnResolved), len(resp.UnResolved))
