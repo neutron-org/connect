@@ -378,7 +378,7 @@ func TestCreateMessages(t *testing.T) {
 			},
 			cfg: mexc.DefaultWebSocketConfig,
 			expected: func() []handlers.WebsocketEncodedMessage {
-				msg := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api@BTCUSDT@UTC+8"]}`
+				msg := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8"]}`
 				return []handlers.WebsocketEncodedMessage{[]byte(msg)}
 			},
 			expectedErr: false,
@@ -392,9 +392,9 @@ func TestCreateMessages(t *testing.T) {
 			},
 			cfg: mexc.DefaultWebSocketConfig,
 			expected: func() []handlers.WebsocketEncodedMessage {
-				msg1 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api@BTCUSDT@UTC+8"]}`
-				msg2 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api@ETHUSDT@UTC+8"]}`
-				msg3 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api@ATOMUSDC@UTC+8"]}`
+				msg1 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8"]}`
+				msg2 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api.pb@ETHUSDT@UTC+8"]}`
+				msg3 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api.pb@ATOMUSDC@UTC+8"]}`
 				return []handlers.WebsocketEncodedMessage{[]byte(msg1), []byte(msg2), []byte(msg3)}
 			},
 			expectedErr: false,
@@ -407,7 +407,7 @@ func TestCreateMessages(t *testing.T) {
 			},
 			cfg: batchCfg,
 			expected: func() []handlers.WebsocketEncodedMessage {
-				msg1 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api@BTCUSDT@UTC+8","spot@public.miniTicker.v3.api@ETHUSDT@UTC+8"]}`
+				msg1 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","spot@public.miniTicker.v3.api.pb@ETHUSDT@UTC+8"]}`
 				return []handlers.WebsocketEncodedMessage{[]byte(msg1)}
 			},
 			expectedErr: false,
@@ -421,8 +421,8 @@ func TestCreateMessages(t *testing.T) {
 			},
 			cfg: batchCfg,
 			expected: func() []handlers.WebsocketEncodedMessage {
-				msg1 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api@BTCUSDT@UTC+8","spot@public.miniTicker.v3.api@ETHUSDT@UTC+8"]}`
-				msg2 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api@ATOMUSDC@UTC+8"]}`
+				msg1 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","spot@public.miniTicker.v3.api.pb@ETHUSDT@UTC+8"]}`
+				msg2 := `{"method":"SUBSCRIPTION","params":["spot@public.miniTicker.v3.api.pb@ATOMUSDC@UTC+8"]}`
 				return []handlers.WebsocketEncodedMessage{[]byte(msg1), []byte(msg2)}
 			},
 			expectedErr: false,
