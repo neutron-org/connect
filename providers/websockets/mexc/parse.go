@@ -27,8 +27,6 @@ func (h *WebSocketHandler) parseTickerResponseMessage(
 			fmt.Errorf("unknown ticker %s", msg.Data.Symbol)
 	}
 
-	//fmt.Printf("channel: %s\n", msg.Channel)
-
 	// Ensure that the channel received is the ticker channel.
 	if !strings.HasPrefix(msg.Channel, string(MiniTickerChannel)) {
 		err := fmt.Errorf("invalid channel %s", msg.Channel)
