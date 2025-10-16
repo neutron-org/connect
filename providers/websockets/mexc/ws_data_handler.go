@@ -66,7 +66,6 @@ func (h *WebSocketHandler) HandleMessage(
 	)
 
 	err := json.Unmarshal(message, &msg)
-	//fmt.Printf("Error: %s\n", err)
 
 	// if it's not a base message, it must be a protobuf encoded message
 	if err != nil {

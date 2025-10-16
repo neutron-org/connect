@@ -174,8 +174,7 @@ const file_proto_mexc_response_proto_rawDesc = "" +
 	"\x12lastCloseZonedRate\x18\n" +
 	" \x01(\tR\x12lastCloseZonedRate\x12$\n" +
 	"\rlastCloseHigh\x18\v \x01(\tR\rlastCloseHigh\x12\"\n" +
-	"\flastCloseLow\x18\f \x01(\tR\flastCloseLowB_\n" +
-	"\x1ccom.mxc.push.common.protobufB\x1aPublicMiniTickerV3ApiProtoH\x01P\x01Z\x1fproviders/websockets/mexc/protob\x06proto3"
+	"\flastCloseLow\x18\f \x01(\tR\flastCloseLowBAB\x1aPublicMiniTickerV3ApiProtoH\x01P\x01Z\x1fproviders/websockets/mexc/protob\x06proto3"
 
 var (
 	file_proto_mexc_response_proto_rawDescOnce sync.Once
