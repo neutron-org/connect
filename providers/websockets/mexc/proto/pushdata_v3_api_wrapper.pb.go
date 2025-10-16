@@ -25,29 +25,16 @@ const (
 )
 
 type PushDataV3ApiWrapper struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// *
-	// 频道
-	Channel string `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
-	// *
-	// 数据，NOTE：因为不能重复，所以类型和变量名尽量使用全名
-	//
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Channel string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
 	// Types that are valid to be assigned to Body:
 	//
 	//	*PushDataV3ApiWrapper_PublicMiniTicker
-	Body isPushDataV3ApiWrapper_Body `protobuf_oneof:"body"`
-	// *
-	// 交易对
-	Symbol *string `protobuf:"bytes,3,opt,name=symbol,proto3,oneof" json:"symbol,omitempty"`
-	// *
-	// 交易对ID
-	SymbolId *string `protobuf:"bytes,4,opt,name=symbolId,proto3,oneof" json:"symbolId,omitempty"`
-	// *
-	// 消息生成时间
-	CreateTime *int64 `protobuf:"varint,5,opt,name=createTime,proto3,oneof" json:"createTime,omitempty"`
-	// *
-	// 消息推送时间
-	SendTime      *int64 `protobuf:"varint,6,opt,name=sendTime,proto3,oneof" json:"sendTime,omitempty"`
+	Body          isPushDataV3ApiWrapper_Body `protobuf_oneof:"body"`
+	Symbol        *string                     `protobuf:"bytes,3,opt,name=symbol,proto3,oneof" json:"symbol,omitempty"`
+	SymbolId      *string                     `protobuf:"bytes,4,opt,name=symbolId,proto3,oneof" json:"symbolId,omitempty"`
+	CreateTime    *int64                      `protobuf:"varint,5,opt,name=createTime,proto3,oneof" json:"createTime,omitempty"`
+	SendTime      *int64                      `protobuf:"varint,6,opt,name=sendTime,proto3,oneof" json:"sendTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -138,14 +125,6 @@ type isPushDataV3ApiWrapper_Body interface {
 }
 
 type PushDataV3ApiWrapper_PublicMiniTicker struct {
-	// PublicDealsV3Api publicDeals = 301;
-	// PublicIncreaseDepthsV3Api publicIncreaseDepths = 302;
-	// PublicLimitDepthsV3Api publicLimitDepths = 303;
-	// PrivateOrdersV3Api privateOrders = 304;
-	// PublicBookTickerV3Api publicBookTicker = 305;
-	// PrivateDealsV3Api privateDeals = 306;
-	// PrivateAccountV3Api privateAccount = 307;
-	// PublicSpotKlineV3Api publicSpotKline = 308;
 	PublicMiniTicker *PublicMiniTickerV3Api `protobuf:"bytes,309,opt,name=publicMiniTicker,proto3,oneof"`
 }
 
@@ -169,8 +148,7 @@ const file_proto_mexc_pushdata_v3_api_wrapper_proto_rawDesc = "" +
 	"\a_symbolB\v\n" +
 	"\t_symbolIdB\r\n" +
 	"\v_createTimeB\v\n" +
-	"\t_sendTimeB^\n" +
-	"\x1ccom.mxc.push.common.protobufB\x19PushDataV3ApiWrapperProtoH\x01P\x01Z\x1fproviders/websockets/mexc/protob\x06proto3"
+	"\t_sendTimeB@B\x19PushDataV3ApiWrapperProtoH\x01P\x01Z\x1fproviders/websockets/mexc/protob\x06proto3"
 
 var (
 	file_proto_mexc_pushdata_v3_api_wrapper_proto_rawDescOnce sync.Once

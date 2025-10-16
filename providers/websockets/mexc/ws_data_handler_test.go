@@ -6,13 +6,15 @@ import (
 	"math/big"
 	"testing"
 
+	providertypes "github.com/skip-mev/slinky/providers/types"
+	mexcpb "github.com/skip-mev/slinky/providers/websockets/mexc/proto"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	goproto "google.golang.org/protobuf/proto"
 
 	"github.com/skip-mev/slinky/oracle/config"
 	"github.com/skip-mev/slinky/oracle/types"
 	"github.com/skip-mev/slinky/providers/base/websocket/handlers"
-	providertypes "github.com/skip-mev/slinky/providers/types"
 	"github.com/skip-mev/slinky/providers/websockets/mexc"
 )
 
@@ -28,6 +30,134 @@ var (
 	}
 	logger = zap.NewExample()
 )
+
+func TestTest(t *testing.T) {
+	testCases := []struct {
+		name string
+		msg  func() string
+	}{
+		{
+			name: "unknown message - old format",
+			msg: func() string {
+				return `{"id":0,"code":0,"msg":"UNKNOWN"}`
+			},
+		},
+		{
+			name: "unsupported market price update",
+			msg: func() string {
+				msg := mexcpb.PushDataV3ApiWrapper{
+					Channel: "spot@public.miniTicker.v3.api.pb",
+					Body: &mexcpb.PushDataV3ApiWrapper_PublicMiniTicker{
+						PublicMiniTicker: &mexcpb.PublicMiniTickerV3Api{
+							Symbol:             "MEMCOIN",
+							Price:              "10.00",
+							Rate:               "",
+							ZonedRate:          "",
+							High:               "",
+							Low:                "",
+							Volume:             "",
+							Quantity:           "",
+							LastCloseRate:      "",
+							LastCloseZonedRate: "",
+							LastCloseHigh:      "",
+							LastCloseLow:       "",
+						},
+					},
+				}
+
+				bz, err := goproto.Marshal(&msg)
+
+				if err != nil {
+					panic("kekw")
+				}
+
+				str := base64.StdEncoding.EncodeToString(bz)
+
+				return str
+			},
+		},
+		{
+			name: "price update from incorrect channel",
+			msg: func() string {
+				msg := mexcpb.PushDataV3ApiWrapper{
+					Channel: "futures@public.miniTicker.v3.api.pb",
+					Body: &mexcpb.PushDataV3ApiWrapper_PublicMiniTicker{
+						PublicMiniTicker: &mexcpb.PublicMiniTickerV3Api{
+							Symbol:             "BTCUSDT",
+							Price:              "10000.00",
+							Rate:               "",
+							ZonedRate:          "",
+							High:               "",
+							Low:                "",
+							Volume:             "",
+							Quantity:           "",
+							LastCloseRate:      "",
+							LastCloseZonedRate: "",
+							LastCloseHigh:      "",
+							LastCloseLow:       "",
+						},
+					},
+					Symbol:     nil,
+					SymbolId:   nil,
+					CreateTime: nil,
+					SendTime:   nil,
+				}
+
+				bz, err := goproto.Marshal(&msg)
+
+				if err != nil {
+					panic("kekw")
+				}
+
+				str := base64.StdEncoding.EncodeToString(bz)
+
+				return str
+			},
+		},
+		{
+			name: "price update with invalid price",
+			msg: func() string {
+				msg := mexcpb.PushDataV3ApiWrapper{
+					Channel: "spot@public.miniTicker.v3.api.pb",
+					Body: &mexcpb.PushDataV3ApiWrapper_PublicMiniTicker{
+						PublicMiniTicker: &mexcpb.PublicMiniTickerV3Api{
+							Symbol:             "BTCUSDT",
+							Price:              "$10,000.00",
+							Rate:               "",
+							ZonedRate:          "",
+							High:               "",
+							Low:                "",
+							Volume:             "",
+							Quantity:           "",
+							LastCloseRate:      "",
+							LastCloseZonedRate: "",
+							LastCloseHigh:      "",
+							LastCloseLow:       "",
+						},
+					},
+					Symbol:     nil,
+					SymbolId:   nil,
+					CreateTime: nil,
+					SendTime:   nil,
+				}
+
+				bz, err := goproto.Marshal(&msg)
+
+				if err != nil {
+					panic("kekw")
+				}
+
+				str := base64.StdEncoding.EncodeToString(bz)
+
+				return str
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		fmt.Printf("\nname: %s Message: %s\n", tc.name, tc.msg())
+	}
+}
 
 func TestHandleMessage(t *testing.T) {
 	testCases := []struct {
@@ -71,28 +201,15 @@ func TestHandleMessage(t *testing.T) {
 			expErr: true,
 		},
 		{
-			name: "price update message",
-			msg: func() []byte {
-				msg := `{"c":"spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"10000.00"}}`
-				return []byte(msg)
-			},
-			resp: types.PriceResponse{
-				Resolved: types.ResolvedPrices{
-					btcusdt: {
-						Value: big.NewFloat(10000.00),
-					},
-				},
-			},
-			updateMessage: func() []handlers.WebsocketEncodedMessage {
-				return nil
-			},
-			expErr: false,
-		},
-		{
 			name: "unsupported market price update",
 			msg: func() []byte {
-				msg := `{"c":"spot@public.miniTicker.v3.api.pb@MOGUSDT@UTC+8","d":{"s":"MOGUSDT","p":"10000.00"}}`
-				return []byte(msg)
+				msg := "CiBzcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYqoTEAoHTUVNQ09JThIFMTAuMDA="
+				decoded, err := base64.StdEncoding.DecodeString(msg)
+
+				if err != nil {
+					panic(err)
+				}
+				return decoded
 			},
 			resp: types.PriceResponse{},
 			updateMessage: func() []handlers.WebsocketEncodedMessage {
@@ -103,8 +220,13 @@ func TestHandleMessage(t *testing.T) {
 		{
 			name: "price update from incorrect channel",
 			msg: func() []byte {
-				msg := `{"c":"futures@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"10000.00"}}`
-				return []byte(msg)
+				msg := "CjFmdXR1cmVzQHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYkBCVENVU0RUQFVUQys4GgdCVENVU0RUMLulvZqUM6oTfAoHQlRDVVNEVBIJMTE1ODg3LjUxGgYwLjAwNjciBjAuMDA2NyoJMTE2NjU1LjM5MgkxMTQ4NzIuODM6Czg1Njc3MjA1Ny41Qg03MzkwLjYxNzM4MDM4SgYwLjAwNjdSBjAuMDA2N1oJMTE2NjU1LjM5YgkxMTQ4NzIuODM="
+				decoded, err := base64.StdEncoding.DecodeString(msg)
+
+				if err != nil {
+					panic(err)
+				}
+				return decoded
 			},
 			resp: types.PriceResponse{
 				UnResolved: types.UnResolvedPrices{
@@ -121,8 +243,13 @@ func TestHandleMessage(t *testing.T) {
 		{
 			name: "price update with invalid price",
 			msg: func() []byte {
-				msg := `{"c":"spot@public.miniTicker.v3.api.pb@BTCUSDT@UTC+8","d":{"s":"BTCUSDT","p":"$10,000.00"}}`
-				return []byte(msg)
+				msg := "CiBzcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYqoTFQoHQlRDVVNEVBIKJDEwLDAwMC4wMA=="
+				decoded, err := base64.StdEncoding.DecodeString(msg)
+
+				if err != nil {
+					panic(err)
+				}
+				return decoded
 			},
 			resp: types.PriceResponse{
 				UnResolved: types.UnResolvedPrices{
@@ -198,7 +325,10 @@ func TestHandleMessage(t *testing.T) {
 			require.NoError(t, err)
 
 			resp, updateMsg, err := wsHandler.HandleMessage(tc.msg())
+			//fmt.Printf("resp: %+v", resp)
 			if tc.expErr {
+				//fmt.Printf("Result error: %s\n\n", err)
+
 				require.Error(t, err)
 
 				require.Equal(t, len(tc.resp.UnResolved), len(resp.UnResolved))

@@ -16,10 +16,10 @@ import (
 // decodeMiniTickerProtobuf extracts symbol and price from a protobuf-encoded
 // PublicMiniTickerV3Api message. It returns error if the payload does not
 // appear to be a valid protobuf with the expected fields.
-func decodeMiniTickerProtobuf(message []byte) (string, string, error) {
+func decodeMiniTickerProtobuf(message []byte) (string, string, string, error) {
 	var wrapper mexcpb.PushDataV3ApiWrapper
 	if err := goproto.Unmarshal(message, &wrapper); err != nil {
-		return "", "", fmt.Errorf("failed to unmarshal PushDataV3ApiWrapper from proto: %w", err)
+		return "", "", "", fmt.Errorf("failed to unmarshal PushDataV3ApiWrapper from proto: %w", err)
 	}
 	// Check that field of the oneof is set to "PublicMiniTickerV3Api"
 	var minitickerMsg *mexcpb.PublicMiniTickerV3Api
@@ -27,14 +27,15 @@ func decodeMiniTickerProtobuf(message []byte) (string, string, error) {
 	case *mexcpb.PushDataV3ApiWrapper_PublicMiniTicker:
 		minitickerMsg = body.PublicMiniTicker
 	default:
-		return "", "", fmt.Errorf("no PublicMiniTicker in this message (found %T)", body)
+		return "", "", "", fmt.Errorf("no PublicMiniTicker in this message (found %T)", body)
 	}
 	symbol := minitickerMsg.GetSymbol()
 	price := minitickerMsg.GetPrice()
+	channel := wrapper.Channel
 
 	if symbol != "" && price != "" {
-		return symbol, price, nil
+		return channel, symbol, price, nil
 	} else {
-		return "", "", fmt.Errorf("empty symbol=%s or price=%s", symbol, price)
+		return "", "", "", fmt.Errorf("empty symbol=%s or price=%s", symbol, price)
 	}
 }

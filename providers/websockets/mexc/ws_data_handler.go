@@ -66,15 +66,16 @@ func (h *WebSocketHandler) HandleMessage(
 	)
 
 	err := json.Unmarshal(message, &msg)
+	//fmt.Printf("Error: %s\n", err)
 
 	// if it's not a base message, it must be a protobuf encoded message
 	if err != nil {
-		symbol, price, err := decodeMiniTickerProtobuf(message)
+		channel, symbol, price, err := decodeMiniTickerProtobuf(message)
 		if err == nil {
 			h.logger.Debug("subscribed to ticker channel", zap.String("instruments", msg.Message))
 
 			tickerMsg = TickerResponseMessage{
-				Channel: string(MiniTickerChannel),
+				Channel: channel,
 				Data:    TickerData{Symbol: symbol, Price: price},
 			}
 			resp, err := h.parseTickerResponseMessage(tickerMsg)
