@@ -7,10 +7,8 @@ import (
 	"testing"
 
 	providertypes "github.com/skip-mev/slinky/providers/types"
-	mexcpb "github.com/skip-mev/slinky/providers/websockets/mexc/proto"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	goproto "google.golang.org/protobuf/proto"
 
 	"github.com/skip-mev/slinky/oracle/config"
 	"github.com/skip-mev/slinky/oracle/types"
@@ -30,134 +28,6 @@ var (
 	}
 	logger = zap.NewExample()
 )
-
-func TestTest(t *testing.T) {
-	testCases := []struct {
-		name string
-		msg  func() string
-	}{
-		{
-			name: "unknown message - old format",
-			msg: func() string {
-				return `{"id":0,"code":0,"msg":"UNKNOWN"}`
-			},
-		},
-		{
-			name: "unsupported market price update",
-			msg: func() string {
-				msg := mexcpb.PushDataV3ApiWrapper{
-					Channel: "spot@public.miniTicker.v3.api.pb",
-					Body: &mexcpb.PushDataV3ApiWrapper_PublicMiniTicker{
-						PublicMiniTicker: &mexcpb.PublicMiniTickerV3Api{
-							Symbol:             "MEMCOIN",
-							Price:              "10.00",
-							Rate:               "",
-							ZonedRate:          "",
-							High:               "",
-							Low:                "",
-							Volume:             "",
-							Quantity:           "",
-							LastCloseRate:      "",
-							LastCloseZonedRate: "",
-							LastCloseHigh:      "",
-							LastCloseLow:       "",
-						},
-					},
-				}
-
-				bz, err := goproto.Marshal(&msg)
-
-				if err != nil {
-					panic("kekw")
-				}
-
-				str := base64.StdEncoding.EncodeToString(bz)
-
-				return str
-			},
-		},
-		{
-			name: "price update from incorrect channel",
-			msg: func() string {
-				msg := mexcpb.PushDataV3ApiWrapper{
-					Channel: "futures@public.miniTicker.v3.api.pb",
-					Body: &mexcpb.PushDataV3ApiWrapper_PublicMiniTicker{
-						PublicMiniTicker: &mexcpb.PublicMiniTickerV3Api{
-							Symbol:             "BTCUSDT",
-							Price:              "10000.00",
-							Rate:               "",
-							ZonedRate:          "",
-							High:               "",
-							Low:                "",
-							Volume:             "",
-							Quantity:           "",
-							LastCloseRate:      "",
-							LastCloseZonedRate: "",
-							LastCloseHigh:      "",
-							LastCloseLow:       "",
-						},
-					},
-					Symbol:     nil,
-					SymbolId:   nil,
-					CreateTime: nil,
-					SendTime:   nil,
-				}
-
-				bz, err := goproto.Marshal(&msg)
-
-				if err != nil {
-					panic("kekw")
-				}
-
-				str := base64.StdEncoding.EncodeToString(bz)
-
-				return str
-			},
-		},
-		{
-			name: "price update with invalid price",
-			msg: func() string {
-				msg := mexcpb.PushDataV3ApiWrapper{
-					Channel: "spot@public.miniTicker.v3.api.pb",
-					Body: &mexcpb.PushDataV3ApiWrapper_PublicMiniTicker{
-						PublicMiniTicker: &mexcpb.PublicMiniTickerV3Api{
-							Symbol:             "BTCUSDT",
-							Price:              "$10,000.00",
-							Rate:               "",
-							ZonedRate:          "",
-							High:               "",
-							Low:                "",
-							Volume:             "",
-							Quantity:           "",
-							LastCloseRate:      "",
-							LastCloseZonedRate: "",
-							LastCloseHigh:      "",
-							LastCloseLow:       "",
-						},
-					},
-					Symbol:     nil,
-					SymbolId:   nil,
-					CreateTime: nil,
-					SendTime:   nil,
-				}
-
-				bz, err := goproto.Marshal(&msg)
-
-				if err != nil {
-					panic("kekw")
-				}
-
-				str := base64.StdEncoding.EncodeToString(bz)
-
-				return str
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		fmt.Printf("\nname: %s Message: %s\n", tc.name, tc.msg())
-	}
-}
 
 func TestHandleMessage(t *testing.T) {
 	testCases := []struct {
