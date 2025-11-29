@@ -1,7 +1,7 @@
 # ./contrib/images/slinky.generator.dev.Dockerfile
 
 # Stage 1: Build the Go application
-FROM golang:1.23 AS builder
+FROM golang:1.24 AS builder
 
 WORKDIR /src/slinky
 
