@@ -3,8 +3,8 @@ package mexc
 import (
 	"fmt"
 
+	goproto "github.com/cosmos/gogoproto/proto"
 	mexcpb "github.com/skip-mev/slinky/providers/websockets/mexc/proto"
-	goproto "google.golang.org/protobuf/proto"
 )
 
 // Lightweight protobuf wire decoder for PublicMiniTickerV3Api

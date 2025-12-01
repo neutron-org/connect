@@ -2,10 +2,9 @@
 // https://github.com/mexcdevelop/websocket-proto/blob/main/PublicMiniTickerV3Api.proto
 syntax = "proto3";
 
+package sidecar.mexc;
+
 option go_package = "providers/websockets/mexc/proto";
-option optimize_for = SPEED;
-option java_multiple_files = true;
-option java_outer_classname = "PublicMiniTickerV3ApiProto";
 
 message PublicMiniTickerV3Api {
   string symbol = 1;

@@ -322,13 +322,3 @@ docs:
 		echo "Mintlify not found. Install at https://mintlify.com/docs/quickstart"; \
 	fi
 .PHONY: docs
-
-###############################################################################
-###                          Protobuf types for Sidecar                     ###
-###############################################################################
-
-proto-mexc:
-	@echo "Generating Sidecar Protobuf files"
-	protoc --proto_path ./ ./proto/mexc/response.proto ./proto/mexc/pushdata_v3_api_wrapper.proto --go_out=./
-
-.PHONY: proto-mexc
