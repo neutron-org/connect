@@ -106,7 +106,7 @@ func CCVInterchainConstructor(ctx context.Context, t *testing.T, chains []*cosmo
 		SkipPathCreation: false,
 	}))
 
-	require.NoError(t, chains[1].FinishICSProviderSetup(ctx, r, eRep, path))
+	require.NoError(t, chains[1].FinishICSProviderSetup(ctx, chains[0], r, eRep, path))
 
 	return &CCVInterchain{
 		relayer:  r,
