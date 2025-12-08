@@ -74,6 +74,10 @@ func (s *ServerTestSuite) SetupTest() {
 	// start server + client w/ context
 	go s.srv.StartServer(s.ctx, localhost, port)
 
+	// TODO: refactor
+	// give a time to server to open socket
+	time.Sleep(1 * time.Second)
+
 	dialCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	s.Require().NoError(s.client.Start(dialCtx))
