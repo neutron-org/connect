@@ -2,13 +2,11 @@
 // https://github.com/mexcdevelop/websocket-proto/blob/main/PublicMiniTickerV3Api.proto
 syntax = "proto3";
 
+package sidecar.mexc;
+
 option go_package = "providers/websockets/mexc/proto";
 
-import "proto/mexc/response.proto";
-
-option optimize_for = SPEED;
-option java_multiple_files = true;
-option java_outer_classname = "PushDataV3ApiWrapperProto";
+import "sidecar/mexc/response.proto";
 
 message PushDataV3ApiWrapper {
   string channel = 1;
