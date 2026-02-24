@@ -158,6 +158,28 @@ func TestParseResponse(t *testing.T) {
 			),
 		},
 		{
+			name: "partially good response",
+			cps: []types.ProviderTicker{
+				ethusd,
+				btcusd,
+			},
+			response: testutils.CreateResponseFromJSON(
+				`{"error":["EQuery:Unknown asset pair"],"result":{"XETHZUSD":{"a":["3338.95000","1","1.000"],"b":["3338.94000","246","246.000"],"c":["3338.08000","0.00702654"],"v":["33234.61736920","35692.20596751"],"p":["3310.12909","3324.16514"],"t":[25646,28278],"l":["3200.17000","3200.17000"],"h":["3547.76000","3547.76000"],"o":"3518.43000"}}}`,
+			),
+			expected: types.NewPriceResponse(
+				types.ResolvedPrices{
+					ethusd: {
+						Value: big.NewFloat(3338.08),
+					},
+				},
+				types.UnResolvedPrices{
+					btcusd: providertypes.UnresolvedResult{
+						ErrorWithCode: providertypes.NewErrorWithCode(fmt.Errorf("no response"), providertypes.ErrorAPIGeneral),
+					},
+				},
+			),
+		},
+		{
 			name: "no response",
 			cps: []types.ProviderTicker{
 				btcusdt,
