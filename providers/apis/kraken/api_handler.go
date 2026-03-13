@@ -94,7 +94,8 @@ func (h *APIHandler) ParseResponse(
 		result.Errors = nil
 	}
 
-	if len(result.Errors) > 0 {
+	// If there are errors and no tickers that means the request failed completely and we exit here
+	if len(result.Errors) > 0 && len(result.Tickers) == 0 {
 		err := fmt.Errorf(
 			"kraken API call error: %w", errors.New(strings.Join(result.Errors, ", ")),
 		)
