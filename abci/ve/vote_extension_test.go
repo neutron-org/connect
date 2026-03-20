@@ -19,6 +19,7 @@ import (
 	"github.com/skip-mev/slinky/abci/testutils"
 	slinkyabci "github.com/skip-mev/slinky/abci/types"
 	"github.com/skip-mev/slinky/abci/ve"
+	vetestutils "github.com/skip-mev/slinky/abci/ve/testutils"
 	abcitypes "github.com/skip-mev/slinky/abci/ve/types"
 	slinkytypes "github.com/skip-mev/slinky/pkg/types"
 	client "github.com/skip-mev/slinky/service/clients/oracle"
@@ -324,7 +325,7 @@ func (s *VoteExtensionTestSuite) TestExtendVoteExtension() {
 
 func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 	cdc := codec.NewCompressionVoteExtensionCodec(
-		codec.NewDefaultVoteExtensionCodec(),
+		codec.NewVoteExtensionCodecWithSizeCheck(),
 		codec.NewZLibCompressor(),
 	)
 
@@ -333,7 +334,7 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 		getReq               func() *cometabci.RequestVerifyVoteExtension
 		currencyPairStrategy func() *mockstrategies.CurrencyPairStrategy
 		expectedResponse     *cometabci.ResponseVerifyVoteExtension
-		expectedError        bool
+		expectedErrSubstr    string
 	}{
 		{
 			name: "nil request returns error",
@@ -343,8 +344,8 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			currencyPairStrategy: func() *mockstrategies.CurrencyPairStrategy {
 				return mockstrategies.NewCurrencyPairStrategy(s.T())
 			},
-			expectedResponse: nil,
-			expectedError:    true,
+			expectedResponse:  nil,
+			expectedErrSubstr: "nil request",
 		},
 		{
 			name: "empty vote extension",
@@ -358,7 +359,6 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
 				Status: cometabci.ResponseVerifyVoteExtension_ACCEPT,
 			},
-			expectedError: false,
 		},
 		{
 			name: "empty vote extension - 1 cp in prev state",
@@ -372,7 +372,6 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
 				Status: cometabci.ResponseVerifyVoteExtension_ACCEPT,
 			},
-			expectedError: false,
 		},
 		{
 			name: "malformed bytes",
@@ -388,7 +387,7 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
 				Status: cometabci.ResponseVerifyVoteExtension_REJECT,
 			},
-			expectedError: true,
+			expectedErrSubstr: "zlib: invalid header",
 		},
 		{
 			name: "valid vote extension - 2 cp in prev state",
@@ -417,7 +416,6 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
 				Status: cometabci.ResponseVerifyVoteExtension_ACCEPT,
 			},
-			expectedError: false,
 		},
 		{
 			name: "invalid vote extension - 1 cp in prev state - should fail",
@@ -446,7 +444,7 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
 				Status: cometabci.ResponseVerifyVoteExtension_REJECT,
 			},
-			expectedError: true,
+			expectedErrSubstr: "number of oracle vote extension pairs of 2 greater than maximum expected pairs of 1",
 		},
 		{
 			name: "vote extension with no prices",
@@ -472,7 +470,6 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
 				Status: cometabci.ResponseVerifyVoteExtension_ACCEPT,
 			},
-			expectedError: false,
 		},
 		{
 			name: "vote extension with malformed prices",
@@ -500,7 +497,43 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
 				Status: cometabci.ResponseVerifyVoteExtension_REJECT,
 			},
-			expectedError: true,
+			expectedErrSubstr: "price bytes are too long",
+		},
+		{
+			name: "vote extension with injected unknown field",
+			getReq: func() *cometabci.RequestVerifyVoteExtension {
+				prices := map[uint64][]byte{
+					0: oneHundred.Bytes(),
+					1: twoHundred.Bytes(),
+				}
+
+				// craft a compressed vote extension with a modified OracleVoteExtension type
+				// that contains an extraneous field. This is the same as what is done inside
+				// testutils.CreateVoteExtensionBytes used in other test cases but with a
+				// modified OracleVoteExtension type
+				ve := vetestutils.OracleVoteExtension{
+					Prices:          prices,
+					ExtraneousField: []byte("extraneous field"),
+				}
+				encodedVe, err := ve.Marshal()
+				s.Require().NoError(err)
+				compressor := codec.NewZLibCompressor()
+				compressedVe, err := compressor.Compress(encodedVe)
+				s.Require().NoError(err)
+
+				return &cometabci.RequestVerifyVoteExtension{
+					VoteExtension: compressedVe,
+					Height:        1,
+				}
+			},
+			currencyPairStrategy: func() *mockstrategies.CurrencyPairStrategy {
+				cpStrategy := mockstrategies.NewCurrencyPairStrategy(s.T())
+				return cpStrategy
+			},
+			expectedResponse: &cometabci.ResponseVerifyVoteExtension{
+				Status: cometabci.ResponseVerifyVoteExtension_REJECT,
+			},
+			expectedErrSubstr: "incoming bytes size doesn't match the remarshaled bytes size",
 		},
 	}
 
@@ -520,8 +553,8 @@ func (s *VoteExtensionTestSuite) TestVerifyVoteExtension() {
 			resp, err := handler(s.ctx, tc.getReq())
 			s.Require().Equal(tc.expectedResponse, resp)
 
-			if tc.expectedError {
-				s.Require().Error(err)
+			if tc.expectedErrSubstr != "" {
+				s.Require().ErrorContains(err, tc.expectedErrSubstr)
 			} else {
 				s.Require().NoError(err)
 			}

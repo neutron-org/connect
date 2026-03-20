@@ -3,11 +3,11 @@ package codec
 import (
 	"bytes"
 	"compress/zlib"
+	"fmt"
 	"io"
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/klauspost/compress/zstd"
-
 	vetypes "github.com/skip-mev/slinky/abci/ve/types"
 )
 
@@ -39,7 +39,6 @@ type ExtendedCommitCodec interface {
 }
 
 // NewDefaultVoteExtensionCodec returns a new DefaultVoteExtensionCodec.
-
 func NewDefaultVoteExtensionCodec() *DefaultVoteExtensionCodec {
 	return &DefaultVoteExtensionCodec{}
 }
@@ -55,6 +54,39 @@ func (codec *DefaultVoteExtensionCodec) Encode(ve vetypes.OracleVoteExtension) (
 func (codec *DefaultVoteExtensionCodec) Decode(bz []byte) (vetypes.OracleVoteExtension, error) {
 	var ve vetypes.OracleVoteExtension
 	return ve, ve.Unmarshal(bz)
+}
+
+// NewVoteExtensionCodecWithSizeCheck returns a new VoteExtensionCodecWithSizeCheck.
+func NewVoteExtensionCodecWithSizeCheck() *VoteExtensionCodecWithSizeCheck {
+	return &VoteExtensionCodecWithSizeCheck{}
+}
+
+// VoteExtensionCodecWithSizeCheck is an implementation of VoteExtensionCodec with a size check
+// on Decoding level. For Encode it uses the vanilla Marshal implementation. For Decode it has
+// an additional Encode and Compare step for checking whether the incoming bytes are the same as
+// the decoded and encoded bytes. This makes sure that the vote extension doesn't have any
+// extraneous fields.
+type VoteExtensionCodecWithSizeCheck struct{}
+
+func (codec *VoteExtensionCodecWithSizeCheck) Encode(ve vetypes.OracleVoteExtension) ([]byte, error) {
+	return ve.Marshal()
+}
+
+func (codec *VoteExtensionCodecWithSizeCheck) Decode(bz []byte) (vetypes.OracleVoteExtension, error) {
+	var ve vetypes.OracleVoteExtension
+	if err := ve.Unmarshal(bz); err != nil {
+		return vetypes.OracleVoteExtension{}, fmt.Errorf("failed to unmarshal vote extension: %w", err)
+	}
+
+	remarshaled, err := ve.Marshal()
+	if err != nil {
+		return vetypes.OracleVoteExtension{}, fmt.Errorf("failed to remarshal vote extension for size check: %w", err)
+	}
+	if len(bz) != len(remarshaled) {
+		return vetypes.OracleVoteExtension{}, fmt.Errorf("incoming bytes size doesn't match the remarshaled bytes size: %d != %d", len(bz), len(remarshaled))
+	}
+
+	return ve, nil
 }
 
 type Compressor interface {

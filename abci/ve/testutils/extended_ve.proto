@@ -1,0 +1,19 @@
+syntax = "proto3";
+package slinky.abci.v1;
+
+option go_package = "github.com/skip-mev/slinky/abci/ve/testutils";
+
+// OracleVoteExtension defines the vote extension structure for oracle prices that contains an
+// extraneous injected field.
+//
+// The .pb.go file is generated using the following command:
+// (cd proto && buf generate --template buf.gen.gogo.yaml ../abci/ve/testutils/extended_ve.proto) && cp github.com/skip-mev/slinky/abci/ve/testutils/extended_ve.pb.go abci/ve/testutils/ && rm -rf github.com
+message OracleVoteExtension {
+  // Prices defines a map of id(CurrencyPair) -> price.Bytes() . i.e. 1 ->
+  // 0x123.. (bytes). Notice the `id` function is determined by the
+  // `CurrencyPairIDStrategy` used in the VoteExtensionHandler.
+  map<uint64, bytes> prices = 1;
+  
+  // Extraneous field is a field that is not part of the original OracleVoteExtension message.
+  bytes extraneous_field = 2;
+}
