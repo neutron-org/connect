@@ -6,9 +6,10 @@ import (
 	"math/big"
 	"testing"
 
-	providertypes "github.com/skip-mev/slinky/providers/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
+	providertypes "github.com/skip-mev/slinky/providers/types"
 
 	"github.com/skip-mev/slinky/oracle/config"
 	"github.com/skip-mev/slinky/oracle/types"
@@ -75,7 +76,6 @@ func TestHandleMessage(t *testing.T) {
 			msg: func() []byte {
 				msg := "CiBzcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYqoTEAoHTUVNQ09JThIFMTAuMDA="
 				decoded, err := base64.StdEncoding.DecodeString(msg)
-
 				if err != nil {
 					panic(err)
 				}
@@ -92,7 +92,6 @@ func TestHandleMessage(t *testing.T) {
 			msg: func() []byte {
 				msg := "CjFmdXR1cmVzQHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYkBCVENVU0RUQFVUQys4GgdCVENVU0RUMLulvZqUM6oTfAoHQlRDVVNEVBIJMTE1ODg3LjUxGgYwLjAwNjciBjAuMDA2NyoJMTE2NjU1LjM5MgkxMTQ4NzIuODM6Czg1Njc3MjA1Ny41Qg03MzkwLjYxNzM4MDM4SgYwLjAwNjdSBjAuMDA2N1oJMTE2NjU1LjM5YgkxMTQ4NzIuODM="
 				decoded, err := base64.StdEncoding.DecodeString(msg)
-
 				if err != nil {
 					panic(err)
 				}
@@ -115,7 +114,6 @@ func TestHandleMessage(t *testing.T) {
 			msg: func() []byte {
 				msg := "CiBzcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYqoTFQoHQlRDVVNEVBIKJDEwLDAwMC4wMA=="
 				decoded, err := base64.StdEncoding.DecodeString(msg)
-
 				if err != nil {
 					panic(err)
 				}
@@ -138,7 +136,6 @@ func TestHandleMessage(t *testing.T) {
 			msg: func() []byte {
 				msg := "Ci5zcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYkBCVENVU0RUQFVUQys4GgdCVENVU0RUMLulvZqUM6oTfAoHQlRDVVNEVBIJMTE1ODg3LjUxGgYwLjAwNjciBjAuMDA2NyoJMTE2NjU1LjM5MgkxMTQ4NzIuODM6Czg1Njc3MjA1Ny41Qg03MzkwLjYxNzM4MDM4SgYwLjAwNjdSBjAuMDA2N1oJMTE2NjU1LjM5YgkxMTQ4NzIuODM="
 				decoded, err := base64.StdEncoding.DecodeString(msg)
-
 				if err != nil {
 					panic(err)
 				}
@@ -161,7 +158,6 @@ func TestHandleMessage(t *testing.T) {
 			msg: func() []byte {
 				msg := "Ci5zcG90QHB1YmxpYy5taW5pVGlja2VyLnYzLmFwaS5wYkBFVEhVU0RUQFVUQys4GgdFVEhVU0RUMLelvZqUM6oTbwoHRVRIVVNEVBIHNDcxNC4wNxoFMC4wMzgiBTAuMDM4Kgc0NzY2LjU5Mgc0NTA4LjY0Og0xMzUzNzcwNjA2LjQ3QgwyOTAyNDcuNDA4MzdKBTAuMDM4UgUwLjAzOFoHNDc2Ni41OWIHNDUwOC42NA=="
 				decoded, err := base64.StdEncoding.DecodeString(msg)
-
 				if err != nil {
 					panic(err)
 				}

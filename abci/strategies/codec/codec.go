@@ -3,6 +3,7 @@ package codec
 import (
 	"bytes"
 	"compress/zlib"
+	"fmt"
 	"io"
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
@@ -12,8 +13,10 @@ import (
 )
 
 var (
-	enc, _ = zstd.NewWriter(nil)
-	dec, _ = zstd.NewReader(nil)
+	enc, _                          = zstd.NewWriter(nil)
+	dec, _                          = zstd.NewReader(nil)
+	VoteExtensionSizeLimit    int64 = 100 * 1024 // 100KB
+	ErrZLibDecompressionLimit       = fmt.Errorf("zlib decompression limit reached")
 )
 
 // VoteExtensionCodec is the interface for encoding / decoding vote extensions.
@@ -75,6 +78,10 @@ func NewZLibCompressor() *ZLibCompressor {
 func (c *ZLibCompressor) Compress(bz []byte) ([]byte, error) {
 	var b bytes.Buffer
 
+	if int64(len(bz)) > VoteExtensionSizeLimit {
+		return nil, fmt.Errorf("zlib compression limit reached")
+	}
+
 	// we use the best compression level as size reduction is prioritized
 	w := zlib.NewWriter(&b)
 	defer w.Close()
@@ -99,10 +106,10 @@ func (c *ZLibCompressor) Decompress(bz []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	r.Close()
+	defer r.Close()
 
-	// read bytes and return
-	return io.ReadAll(r)
+	lr := newLimitReaderWithError(r, VoteExtensionSizeLimit)
+	return io.ReadAll(lr)
 }
 
 // ZStdCompressor is a Compressor that uses zstd to compress / decompress byte arrays, this object is thread-safe.
@@ -214,4 +221,33 @@ func (codec *CompressionExtendedCommitCodec) Decode(bz []byte) (cometabci.Extend
 	}
 
 	return codec.codec.Decode(bz)
+}
+
+// limitReaderWithError is a io.Reader that reads up to n bytes from the underlying reader.
+// Unlike io.LimitReader, this reader returns ErrZLibDecompressionLimit if >n bytes were read.
+type limitReaderWithError struct {
+	r io.Reader
+	n int64
+}
+
+func newLimitReaderWithError(r io.Reader, n int64) *limitReaderWithError {
+	return &limitReaderWithError{r: r, n: n}
+}
+
+func (lr *limitReaderWithError) Read(p []byte) (int, error) {
+	if lr.n <= 0 {
+		var probe [1]byte
+		// read one extra byte to detect(trigger) EOF error
+		_, err := lr.r.Read(probe[:])
+		if err != nil {
+			return 0, err
+		}
+		return 0, ErrZLibDecompressionLimit
+	}
+	if int64(len(p)) > lr.n {
+		p = p[:lr.n]
+	}
+	n, err := lr.r.Read(p)
+	lr.n -= int64(n)
+	return n, err
 }
