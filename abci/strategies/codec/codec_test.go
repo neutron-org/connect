@@ -162,7 +162,7 @@ func TestCompressionExtendedCommitCodec(t *testing.T) {
 func TestZLibCompressor_CompressDecompress_UnderLimit_NoError(t *testing.T) {
 	origLimit := 1000
 
-	comp := compression.NewZLibCompressorLimited(origLimit)
+	comp := compression.NewZLibCompressorWithLimit(origLimit)
 
 	// Ensure payload size is strictly below the current limit.
 	payloadLen := origLimit / 2
@@ -180,7 +180,7 @@ func TestZLibCompressor_CompressDecompress_UnderLimit_NoError(t *testing.T) {
 func TestZLibCompressor_Compress_OverLimit_Error(t *testing.T) {
 	origLimit := 1000
 
-	comp := compression.NewZLibCompressorLimited(origLimit)
+	comp := compression.NewZLibCompressorWithLimit(origLimit)
 
 	payloadLen := origLimit + 1
 
@@ -194,7 +194,7 @@ func TestZLibCompressor_Decompress_OverLimit_Error(t *testing.T) {
 	// This test checks the expected behavior when the decompressed output would exceed the limit.
 	origLimit := 1000
 
-	comp := compression.NewZLibCompressorLimited(origLimit * 2)
+	comp := compression.NewZLibCompressorWithLimit(origLimit * 2)
 
 	payloadLen := origLimit
 
@@ -203,7 +203,7 @@ func TestZLibCompressor_Decompress_OverLimit_Error(t *testing.T) {
 	compressed, err := comp.Compress(payload)
 	require.NoError(t, err)
 
-	dec := compression.NewZLibCompressorLimited(origLimit / 2)
+	dec := compression.NewZLibCompressorWithLimit(origLimit / 2)
 
 	// Lower the decompression limit to trigger the error/short read path.
 	_, err = dec.Decompress(compressed)

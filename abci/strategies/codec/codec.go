@@ -64,37 +64,26 @@ type Compressor interface {
 	Decompress([]byte) ([]byte, error)
 }
 
+// ZLibCompressor is a Compressor that uses zlib to compress / decompress byte arrays, this object is not thread-safe.
 type ZLibCompressor struct {
-	limited *ZLibCompressorLimited
-}
-
-func NewZLibCompressor() *ZLibCompressor {
-	return &ZLibCompressor{limited: NewZLibCompressorLimited(0)}
-}
-
-func (c *ZLibCompressor) Compress(bz []byte) ([]byte, error) {
-	return c.limited.Compress(bz)
-}
-
-func (c *ZLibCompressor) Decompress(bz []byte) ([]byte, error) {
-	return c.limited.Decompress(bz)
-}
-
-// ZLibCompressorLimited is a Compressor that uses zlib to compress / decompress byte arrays, this object is not thread-safe.
-type ZLibCompressorLimited struct {
 	// decompressLimit is the maximum number of bytes that can be decompressed.
 	// if <=0, no limit is applied.
 	decompressLimit int
 }
 
-// NewZLibCompressorLimited returns a new zlibDecompressor.
-func NewZLibCompressorLimited(limit int) *ZLibCompressorLimited {
-	return &ZLibCompressorLimited{decompressLimit: limit}
+// NewZLibCompressorWithLimit returns a new zlibDecompressor with the given decompression limit.
+func NewZLibCompressorWithLimit(limit int) *ZLibCompressor {
+	return &ZLibCompressor{decompressLimit: limit}
+}
+
+// NewZLibCompressor returns a new zlibDecompressor with no limit.
+func NewZLibCompressor() *ZLibCompressor {
+	return NewZLibCompressorWithLimit(0)
 }
 
 // Compress compresses the given byte array using zlib. It returns an error if the compression fails.
 // This function is not thread-safe, and uses zlib.BestCompression as the compression level.
-func (c *ZLibCompressorLimited) Compress(bz []byte) ([]byte, error) {
+func (c *ZLibCompressor) Compress(bz []byte) ([]byte, error) {
 	var b bytes.Buffer
 
 	if len(bz) > c.decompressLimit && c.decompressLimit > 0 {
@@ -117,7 +106,7 @@ func (c *ZLibCompressorLimited) Compress(bz []byte) ([]byte, error) {
 }
 
 // Decompress decompresses the given byte array using zlib. It returns an error if the decompression fails.
-func (c *ZLibCompressorLimited) Decompress(bz []byte) ([]byte, error) {
+func (c *ZLibCompressor) Decompress(bz []byte) ([]byte, error) {
 	if len(bz) == 0 {
 		return nil, nil
 	}
