@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	enc, _                          = zstd.NewWriter(nil)
-	dec, _                          = zstd.NewReader(nil)
-	VoteExtensionSizeLimit    int64 = 100 * 1024 // 100KB
-	ErrZLibDecompressionLimit       = fmt.Errorf("zlib decompression limit reached")
+	enc, _                    = zstd.NewWriter(nil)
+	dec, _                    = zstd.NewReader(nil)
+	ErrZLibDecompressionLimit = fmt.Errorf("zlib decompression limit reached")
 )
 
 // VoteExtensionCodec is the interface for encoding / decoding vote extensions.
@@ -65,20 +64,40 @@ type Compressor interface {
 	Decompress([]byte) ([]byte, error)
 }
 
-// ZLibCompressor is a Compressor that uses zlib to compress / decompress byte arrays, this object is not thread-safe.
-type ZLibCompressor struct{}
+type ZLibCompressor struct {
+	limited *ZLibCompressorLimited
+}
 
-// NewZLibCompressor returns a new zlibDecompressor.
 func NewZLibCompressor() *ZLibCompressor {
-	return &ZLibCompressor{}
+	return &ZLibCompressor{limited: NewZLibCompressorLimited(0)}
+}
+
+func (c *ZLibCompressor) Compress(bz []byte) ([]byte, error) {
+	return c.limited.Compress(bz)
+}
+
+func (c *ZLibCompressor) Decompress(bz []byte) ([]byte, error) {
+	return c.limited.Decompress(bz)
+}
+
+// ZLibCompressorLimited is a Compressor that uses zlib to compress / decompress byte arrays, this object is not thread-safe.
+type ZLibCompressorLimited struct {
+	// decompressLimit is the maximum number of bytes that can be decompressed.
+	// if <=0, no limit is applied.
+	decompressLimit int
+}
+
+// NewZLibCompressorLimited returns a new zlibDecompressor.
+func NewZLibCompressorLimited(limit int) *ZLibCompressorLimited {
+	return &ZLibCompressorLimited{decompressLimit: limit}
 }
 
 // Compress compresses the given byte array using zlib. It returns an error if the compression fails.
 // This function is not thread-safe, and uses zlib.BestCompression as the compression level.
-func (c *ZLibCompressor) Compress(bz []byte) ([]byte, error) {
+func (c *ZLibCompressorLimited) Compress(bz []byte) ([]byte, error) {
 	var b bytes.Buffer
 
-	if int64(len(bz)) > VoteExtensionSizeLimit {
+	if len(bz) > c.decompressLimit && c.decompressLimit > 0 {
 		return nil, fmt.Errorf("zlib compression limit reached")
 	}
 
@@ -98,18 +117,21 @@ func (c *ZLibCompressor) Compress(bz []byte) ([]byte, error) {
 }
 
 // Decompress decompresses the given byte array using zlib. It returns an error if the decompression fails.
-func (c *ZLibCompressor) Decompress(bz []byte) ([]byte, error) {
+func (c *ZLibCompressorLimited) Decompress(bz []byte) ([]byte, error) {
 	if len(bz) == 0 {
 		return nil, nil
 	}
-	r, err := zlib.NewReader(bytes.NewReader(bz))
+	zr, err := zlib.NewReader(bytes.NewReader(bz))
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer zr.Close()
 
-	lr := newLimitReaderWithError(r, VoteExtensionSizeLimit)
-	return io.ReadAll(lr)
+	var r io.Reader = zr
+	if c.decompressLimit > 0 {
+		r = newLimitReaderWithError(r, c.decompressLimit)
+	}
+	return io.ReadAll(r)
 }
 
 // ZStdCompressor is a Compressor that uses zstd to compress / decompress byte arrays, this object is thread-safe.
@@ -227,10 +249,10 @@ func (codec *CompressionExtendedCommitCodec) Decode(bz []byte) (cometabci.Extend
 // Unlike io.LimitReader, this reader returns ErrZLibDecompressionLimit if >n bytes were read.
 type limitReaderWithError struct {
 	r io.Reader
-	n int64
+	n int
 }
 
-func newLimitReaderWithError(r io.Reader, n int64) *limitReaderWithError {
+func newLimitReaderWithError(r io.Reader, n int) *limitReaderWithError {
 	return &limitReaderWithError{r: r, n: n}
 }
 
@@ -244,10 +266,10 @@ func (lr *limitReaderWithError) Read(p []byte) (int, error) {
 		}
 		return 0, ErrZLibDecompressionLimit
 	}
-	if int64(len(p)) > lr.n {
+	if len(p) > lr.n {
 		p = p[:lr.n]
 	}
 	n, err := lr.r.Read(p)
-	lr.n -= int64(n)
+	lr.n -= n
 	return n, err
 }

@@ -160,10 +160,9 @@ func TestCompressionExtendedCommitCodec(t *testing.T) {
 }
 
 func TestZLibCompressor_CompressDecompress_UnderLimit_NoError(t *testing.T) {
-	origLimit := compression.VoteExtensionSizeLimit
-	t.Cleanup(func() { compression.VoteExtensionSizeLimit = origLimit })
+	origLimit := 1000
 
-	comp := compression.NewZLibCompressor()
+	comp := compression.NewZLibCompressorLimited(origLimit)
 
 	// Ensure payload size is strictly below the current limit.
 	payloadLen := origLimit / 2
@@ -179,10 +178,9 @@ func TestZLibCompressor_CompressDecompress_UnderLimit_NoError(t *testing.T) {
 }
 
 func TestZLibCompressor_Compress_OverLimit_Error(t *testing.T) {
-	origLimit := compression.VoteExtensionSizeLimit
-	t.Cleanup(func() { compression.VoteExtensionSizeLimit = origLimit })
+	origLimit := 1000
 
-	comp := compression.NewZLibCompressor()
+	comp := compression.NewZLibCompressorLimited(origLimit)
 
 	payloadLen := origLimit + 1
 
@@ -194,28 +192,21 @@ func TestZLibCompressor_Compress_OverLimit_Error(t *testing.T) {
 
 func TestZLibCompressor_Decompress_OverLimit_Error(t *testing.T) {
 	// This test checks the expected behavior when the decompressed output would exceed the limit.
-	// Decompress may return an "unexpected EOF" error; per requirements it's treated as a valid outcome.
-	origLimit := compression.VoteExtensionSizeLimit
-	t.Cleanup(func() { compression.VoteExtensionSizeLimit = origLimit })
+	origLimit := 1000
 
-	comp := compression.NewZLibCompressor()
+	comp := compression.NewZLibCompressorLimited(origLimit * 2)
 
-	// Keep limits relative: compress under a higher limit, decompress under a smaller limit.
-	decompressLimit := origLimit / 8
-
-	compressLimit := origLimit
-
-	payloadLen := decompressLimit * 2
+	payloadLen := origLimit
 
 	// Create compressed data that expands to more than decompressLimit bytes.
-	compression.VoteExtensionSizeLimit = compressLimit
 	payload := make([]byte, int(payloadLen))
 	compressed, err := comp.Compress(payload)
 	require.NoError(t, err)
 
+	dec := compression.NewZLibCompressorLimited(origLimit / 2)
+
 	// Lower the decompression limit to trigger the error/short read path.
-	compression.VoteExtensionSizeLimit = decompressLimit
-	_, err = comp.Decompress(compressed)
+	_, err = dec.Decompress(compressed)
 	require.Error(t, err)
 	require.ErrorIs(t, err, compression.ErrZLibDecompressionLimit)
 }
