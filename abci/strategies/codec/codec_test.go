@@ -167,7 +167,7 @@ func TestZLibCompressor_CompressDecompress_UnderLimit_NoError(t *testing.T) {
 	// Ensure payload size is strictly below the current limit.
 	payloadLen := origLimit / 2
 
-	payload := make([]byte, int(payloadLen))
+	payload := make([]byte, payloadLen)
 	compressed, err := comp.Compress(payload)
 	require.NoError(t, err)
 
@@ -184,7 +184,7 @@ func TestZLibCompressor_Compress_OverLimit_Error(t *testing.T) {
 
 	payloadLen := origLimit + 1
 
-	payload := make([]byte, int(payloadLen))
+	payload := make([]byte, payloadLen)
 	_, err := comp.Compress(payload)
 	require.Error(t, err)
 	require.Equal(t, "zlib compression limit reached", err.Error())
@@ -199,7 +199,7 @@ func TestZLibCompressor_Decompress_OverLimit_Error(t *testing.T) {
 	payloadLen := origLimit
 
 	// Create compressed data that expands to more than decompressLimit bytes.
-	payload := make([]byte, int(payloadLen))
+	payload := make([]byte, payloadLen)
 	compressed, err := comp.Compress(payload)
 	require.NoError(t, err)
 
