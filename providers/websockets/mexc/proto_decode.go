@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	goproto "github.com/cosmos/gogoproto/proto"
+
 	mexcpb "github.com/skip-mev/slinky/providers/websockets/mexc/proto"
 )
 

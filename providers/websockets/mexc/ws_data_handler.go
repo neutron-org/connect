@@ -66,7 +66,6 @@ func (h *WebSocketHandler) HandleMessage(
 	)
 
 	err := json.Unmarshal(message, &msg)
-
 	// if it's not a base message, it must be a protobuf encoded message
 	if err != nil {
 		channel, symbol, price, err := decodeMiniTickerProtobuf(message)
