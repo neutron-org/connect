@@ -8,6 +8,7 @@ import (
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/klauspost/compress/zstd"
+
 	vetypes "github.com/skip-mev/slinky/abci/ve/types"
 )
 

@@ -78,9 +78,9 @@ func (h *WebSocketHandler) HandleMessage(
 			}
 			resp, err := h.parseTickerResponseMessage(tickerMsg)
 			return resp, nil, err
-		} else {
-			return resp, nil, fmt.Errorf("failed to decode miniticker protobuf message %w", err)
 		}
+		return resp, nil, fmt.Errorf("failed to decode miniticker protobuf message %w", err)
+
 	}
 
 	// Otherwise, we assume it is a subscription or pong message.
