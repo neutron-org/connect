@@ -66,7 +66,6 @@ func (h *WebSocketHandler) HandleMessage(
 	)
 
 	err := json.Unmarshal(message, &msg)
-
 	// if it's not a base message, it must be a protobuf encoded message
 	if err != nil {
 		channel, symbol, price, err := decodeMiniTickerProtobuf(message)
@@ -79,9 +78,9 @@ func (h *WebSocketHandler) HandleMessage(
 			}
 			resp, err := h.parseTickerResponseMessage(tickerMsg)
 			return resp, nil, err
-		} else {
-			return resp, nil, fmt.Errorf("failed to decode miniticker protobuf message %w", err)
 		}
+		return resp, nil, fmt.Errorf("failed to decode miniticker protobuf message %w", err)
+
 	}
 
 	// Otherwise, we assume it is a subscription or pong message.

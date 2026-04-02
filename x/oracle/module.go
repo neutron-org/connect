@@ -139,11 +139,6 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	return gs.Validate()
 }
 
-// RegisterInvariants registers the invariants of the oracle module. If an invariant
-// deviates from its predicted value, the InvariantRegistry triggers appropriate
-// logic (most often the chain will be halted). No invariants exist for the oracle module.
-func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
-
 // InitGenesis performs the genesis initialization for the x/oracle module. It determines the
 // genesis state to initialize from via a json-encoded genesis-state. This method returns no validator set updates.
 // This method panics on any errors.

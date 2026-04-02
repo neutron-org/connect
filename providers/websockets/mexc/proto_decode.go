@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	goproto "github.com/cosmos/gogoproto/proto"
+
 	mexcpb "github.com/skip-mev/slinky/providers/websockets/mexc/proto"
 )
 
@@ -35,7 +36,6 @@ func decodeMiniTickerProtobuf(message []byte) (string, string, string, error) {
 
 	if symbol != "" && price != "" {
 		return channel, symbol, price, nil
-	} else {
-		return "", "", "", fmt.Errorf("empty symbol=%s or price=%s", symbol, price)
 	}
+	return "", "", "", fmt.Errorf("empty symbol=%s or price=%s", symbol, price)
 }

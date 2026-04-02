@@ -3,6 +3,7 @@ package codec
 import (
 	"bytes"
 	"compress/zlib"
+	"fmt"
 	"io"
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
@@ -12,8 +13,9 @@ import (
 )
 
 var (
-	enc, _ = zstd.NewWriter(nil)
-	dec, _ = zstd.NewReader(nil)
+	enc, _                    = zstd.NewWriter(nil)
+	dec, _                    = zstd.NewReader(nil)
+	ErrZLibDecompressionLimit = fmt.Errorf("zlib decompression limit reached")
 )
 
 // VoteExtensionCodec is the interface for encoding / decoding vote extensions.
@@ -39,7 +41,6 @@ type ExtendedCommitCodec interface {
 }
 
 // NewDefaultVoteExtensionCodec returns a new DefaultVoteExtensionCodec.
-
 func NewDefaultVoteExtensionCodec() *DefaultVoteExtensionCodec {
 	return &DefaultVoteExtensionCodec{}
 }
@@ -57,23 +58,69 @@ func (codec *DefaultVoteExtensionCodec) Decode(bz []byte) (vetypes.OracleVoteExt
 	return ve, ve.Unmarshal(bz)
 }
 
+// NewVoteExtensionCodecWithSizeCheck returns a new VoteExtensionCodecWithSizeCheck.
+func NewVoteExtensionCodecWithSizeCheck() *VoteExtensionCodecWithSizeCheck {
+	return &VoteExtensionCodecWithSizeCheck{}
+}
+
+// VoteExtensionCodecWithSizeCheck is an implementation of VoteExtensionCodec with a size check
+// on Decoding level. For Encode it uses the vanilla Marshal implementation. For Decode it has
+// an additional Encode and Compare step for checking whether the incoming bytes are the same as
+// the decoded and encoded bytes. This makes sure that the vote extension doesn't have any
+// extraneous fields.
+type VoteExtensionCodecWithSizeCheck struct{}
+
+func (codec *VoteExtensionCodecWithSizeCheck) Encode(ve vetypes.OracleVoteExtension) ([]byte, error) {
+	return ve.Marshal()
+}
+
+func (codec *VoteExtensionCodecWithSizeCheck) Decode(bz []byte) (vetypes.OracleVoteExtension, error) {
+	var ve vetypes.OracleVoteExtension
+	if err := ve.Unmarshal(bz); err != nil {
+		return vetypes.OracleVoteExtension{}, fmt.Errorf("failed to unmarshal vote extension: %w", err)
+	}
+
+	remarshaled, err := ve.Marshal()
+	if err != nil {
+		return vetypes.OracleVoteExtension{}, fmt.Errorf("failed to remarshal vote extension for size check: %w", err)
+	}
+	if len(bz) != len(remarshaled) {
+		return vetypes.OracleVoteExtension{}, fmt.Errorf("incoming bytes size doesn't match the remarshaled bytes size: %d != %d", len(bz), len(remarshaled))
+	}
+
+	return ve, nil
+}
+
 type Compressor interface {
 	Compress([]byte) ([]byte, error)
 	Decompress([]byte) ([]byte, error)
 }
 
 // ZLibCompressor is a Compressor that uses zlib to compress / decompress byte arrays, this object is not thread-safe.
-type ZLibCompressor struct{}
+type ZLibCompressor struct {
+	// decompressLimit is the maximum number of bytes that can be decompressed.
+	// if <=0, no limit is applied.
+	decompressLimit int
+}
 
-// NewZLibCompressor returns a new zlibDecompressor.
+// NewZLibCompressorWithLimit returns a new zlibDecompressor with the given decompression limit.
+func NewZLibCompressorWithLimit(limit int) *ZLibCompressor {
+	return &ZLibCompressor{decompressLimit: limit}
+}
+
+// NewZLibCompressor returns a new zlibDecompressor with no limit.
 func NewZLibCompressor() *ZLibCompressor {
-	return &ZLibCompressor{}
+	return NewZLibCompressorWithLimit(0)
 }
 
 // Compress compresses the given byte array using zlib. It returns an error if the compression fails.
 // This function is not thread-safe, and uses zlib.BestCompression as the compression level.
 func (c *ZLibCompressor) Compress(bz []byte) ([]byte, error) {
 	var b bytes.Buffer
+
+	if len(bz) > c.decompressLimit && c.decompressLimit > 0 {
+		return nil, fmt.Errorf("zlib compression limit reached")
+	}
 
 	// we use the best compression level as size reduction is prioritized
 	w := zlib.NewWriter(&b)
@@ -95,13 +142,16 @@ func (c *ZLibCompressor) Decompress(bz []byte) ([]byte, error) {
 	if len(bz) == 0 {
 		return nil, nil
 	}
-	r, err := zlib.NewReader(bytes.NewReader(bz))
+	zr, err := zlib.NewReader(bytes.NewReader(bz))
 	if err != nil {
 		return nil, err
 	}
-	r.Close()
+	defer zr.Close()
 
-	// read bytes and return
+	var r io.Reader = zr
+	if c.decompressLimit > 0 {
+		r = newLimitReaderWithError(r, c.decompressLimit)
+	}
 	return io.ReadAll(r)
 }
 
@@ -214,4 +264,33 @@ func (codec *CompressionExtendedCommitCodec) Decode(bz []byte) (cometabci.Extend
 	}
 
 	return codec.codec.Decode(bz)
+}
+
+// limitReaderWithError is a io.Reader that reads up to n bytes from the underlying reader.
+// Unlike io.LimitReader, this reader returns ErrZLibDecompressionLimit if >n bytes were read.
+type limitReaderWithError struct {
+	r io.Reader
+	n int
+}
+
+func newLimitReaderWithError(r io.Reader, n int) *limitReaderWithError {
+	return &limitReaderWithError{r: r, n: n}
+}
+
+func (lr *limitReaderWithError) Read(p []byte) (int, error) {
+	if lr.n <= 0 {
+		var probe [1]byte
+		// read one extra byte to detect(trigger) EOF error
+		_, err := lr.r.Read(probe[:])
+		if err != nil {
+			return 0, err
+		}
+		return 0, ErrZLibDecompressionLimit
+	}
+	if len(p) > lr.n {
+		p = p[:lr.n]
+	}
+	n, err := lr.r.Read(p)
+	lr.n -= n
+	return n, err
 }
